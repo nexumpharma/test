@@ -55,14 +55,14 @@
       if (error) {
         console.error("Erreur de session:", error.message);
         // Redirige vers une page de connexion si la session est invalide
-        window.location.href = "/login"; // Exemple de redirection vers une page de connexion
+        window.location.href = "/test/login"; // Exemple de redirection vers une page de connexion
         return false;
       }
 
       if (!data.session) {
         console.log("Aucune session active. Redirection...");
         // Redirige vers la page de connexion si l'utilisateur n'a pas de session
-        window.location.href = "/login";
+        window.location.href = "/test/login";
         return false;
       }
 
