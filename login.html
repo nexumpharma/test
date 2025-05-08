@@ -19,9 +19,6 @@
       padding: 10px;
       background: #f0f0f0;
     }
-    #log p {
-      margin: 5px 0;
-    }
   </style>
 </head>
 <body>
@@ -33,10 +30,7 @@
 
   <script type="module">
     const log = (msg) => {
-      const logDiv = document.getElementById("log");
-      const p = document.createElement("p");
-      p.innerHTML = msg;
-      logDiv.appendChild(p);
+      document.getElementById("log").innerHTML += `<p>${msg}</p>`;
     };
 
     const edgeCheckEmail = "https://ieoucxpgquqhwraaapjh.functions.supabase.co/check-email-in-airtable";
@@ -45,56 +39,41 @@
     document.getElementById("submitBtn").addEventListener("click", async () => {
       const email = document.getElementById("email").value.trim().toLowerCase();
       if (!email) {
-        log("❌ Veuillez entrer un email.");
+        log("Veuillez entrer un email.");
         return;
       }
 
-      log("⏳ Vérification de l'email...");
+      log("Vérification de l'email...");
 
-      let checkResult;
-      try {
-        const checkResponse = await fetch(edgeCheckEmail, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email })
-        });
+      const checkResponse = await fetch(edgeCheckEmail, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
 
-        if (!checkResponse.ok) {
-          log("❌ Erreur serveur lors de la vérification de l'email.");
-          return;
-        }
-
-        checkResult = await checkResponse.json();
-      } catch (error) {
-        log("❌ Erreur réseau pendant la vérification.");
-        console.error("Erreur fetch check-email:", error);
-        return;
-      }
+      const checkResult = await checkResponse.json();
 
       if (!checkResult.found) {
-        log("❌ Email non trouvé dans Airtable.");
+        log("Email non trouvé dans Airtable.");
         return;
       }
 
-      log("✅ Email reconnu. Génération du lien magique...");
+      log("Email reconnu. Génération du lien magique...");
 
-      try {
-        const linkResponse = await fetch(edgeMagicLink, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email })
-        });
+      const linkResponse = await fetch(edgeMagicLink, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
 
-        const linkResult = await linkResponse.json();
+      const linkResult = await linkResponse.json();
 
-        if (linkResponse.ok && linkResult.link) {
-          log(`<strong>🔗 Lien magique :</strong> <a href="${linkResult.link}" target="_blank">${linkResult.link}</a>`);
-        } else {
-          log("❌ Erreur lors de la génération du lien magique.");
-          console.error("Réponse invalide:", linkResult);
-        }
-      } catch (error) {
-        log("❌ Erreur réseau pendant la génération du lien magique.");
-        console.error("Erreur fetch magic-link:", error);
+      if (linkResult.link) {
+        log(`<strong>Lien magique :</strong> <a href="${linkResult.link}" target="_blank">${linkResult.link}</a>`);
+      } else {
+        log("Erreur lors de la génération du lien magique.");
       }
     });
+  </script>
+</body>
+</html>
