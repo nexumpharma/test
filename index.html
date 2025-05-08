@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Formulaire de RIB</title>
+  <style>
+    #log {
+      background-color: #f4f4f4;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: Arial, sans-serif;
+    }
+  </style>
 </head>
 <body>
   <h1>Formulaire de RIB</h1>
@@ -25,6 +36,9 @@
     <button type="submit">Envoyer</button>
   </form>
 
+  <!-- Zone de log -->
+  <div id="log"></div>
+
   <!-- Script principal en module -->
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -44,6 +58,14 @@
       }
     });
 
+    // Fonction pour ajouter un log dans la zone d'affichage
+    function addLog(message) {
+      const logDiv = document.getElementById("log");
+      const logMessage = document.createElement("p");
+      logMessage.textContent = message;
+      logDiv.appendChild(logMessage);
+    }
+
     // Fonction upload vers Supabase
     async function uploadToSupabase(file) {
       const filePath = `rib/${Date.now()}-${file.name}`;
@@ -51,17 +73,18 @@
 
       if (error) {
         console.error("Erreur upload :", error);
-        alert("Erreur lors du téléchargement du fichier vers Supabase.");
+        addLog("Erreur lors du téléchargement du fichier vers Supabase.");
         return null;
       }
 
       const { publicUrl, error: urlError } = supabase.storage.from(bucketName).getPublicUrl(filePath);
       if (urlError) {
         console.error("Erreur URL publique :", urlError);
-        alert("Erreur lors de la génération de l'URL du fichier.");
+        addLog("Erreur lors de la génération de l'URL du fichier.");
         return null;
       }
 
+      addLog(`Fichier téléchargé avec succès ! URL : ${publicUrl}`);
       return publicUrl;
     }
 
@@ -85,12 +108,13 @@
       });
 
       const result = await response.json();
-      console.log("Réponse Airtable :", result); // 👈 à ajouter
+      addLog(`Réponse Airtable : ${JSON.stringify(result)}`);
+      
       if (!response.ok) {
         console.error("Erreur Airtable :", result);
-        alert("Erreur lors de l'envoi à Airtable.");
+        addLog("Erreur lors de l'envoi à Airtable.");
       } else {
-        alert("Données envoyées avec succès !");
+        addLog("Données envoyées avec succès à Airtable !");
       }
     }
 
@@ -103,14 +127,16 @@
       const fileInput = document.getElementById("fileInput");
 
       if (!fileInput.files.length) {
-        alert("Veuillez sélectionner un fichier.");
+        addLog("Veuillez sélectionner un fichier.");
         return;
       }
 
       const file = fileInput.files[0];
+      addLog("Début de l'upload du fichier...");
       const ribUrl = await uploadToSupabase(file);
 
       if (ribUrl) {
+        addLog("Envoi des données à Airtable...");
         await sendToAirtable({ id, iban, ribUrl });
       }
     });
