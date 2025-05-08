@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Connexion</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+    }
+    #log {
+      margin-top: 20px;
+      padding: 10px;
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Connexion</h1>
+  <label for="email">Email :</label>
+  <input type="email" id="email" required />
+  <button id="submitBtn">Générer un lien magique</button>
+  <div id="log"></div>
+
+  <script type="module">
+    const log = (msg) => {
+      document.getElementById("log").innerHTML += `<p>${msg}</p>`;
+    };
+
+    const edgeCheckEmail = "https://ieoucxpgquqhwraaapjh.functions.supabase.co/check-email-in-airtable";
+    const edgeMagicLink = "https://ieoucxpgquqhwraaapjh.functions.supabase.co/generate-magic-link";
+
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      if (!email) {
+        log("Veuillez entrer un email.");
+        return;
+      }
+
+      log("Vérification de l'email...");
+
+      const checkResponse = await fetch(edgeCheckEmail, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+
+      const checkResult = await checkResponse.json();
+
+      if (!checkResult.found) {
+        log("Email non trouvé dans Airtable.");
+        return;
+      }
+
+      log("Email reconnu. Génération du lien magique...");
+
+      const linkResponse = await fetch(edgeMagicLink, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+
+      const linkResult = await linkResponse.json();
+
+      if (linkResult.link) {
+        log(`<strong>Lien magique :</strong> <a href="${linkResult.link}" target="_blank">${linkResult.link}</a>`);
+      } else {
+        log("Erreur lors de la génération du lien magique.");
+      }
+    });
+  </script>
+</body>
+</html>
