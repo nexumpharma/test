@@ -87,11 +87,12 @@
         const linkResult = await linkResponse.json();
         log(`Résultat JSON du lien magique : ${JSON.stringify(linkResult)}`);
 
-        if (linkResult.link) {
-          log(`<strong>Lien magique :</strong> <a href="${linkResult.link}" target="_blank">${linkResult.link}</a>`);
+        if (linkResponse.ok) {
+          log("✅ Le lien magique a bien été enregistré dans Airtable. Consultez votre boîte mail ou contactez votre référent.");
         } else {
-          log("Erreur : Lien magique non généré.");
+          log("❌ Une erreur est survenue lors de l'enregistrement du lien magique.");
         }
+
       } catch (err) {
         log(`Erreur détectée : ${err.message}`);
         console.error(err);
