@@ -51,10 +51,13 @@
 
       try {
         const checkResponse = await fetch(edgeCheckEmail, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email })
-        });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imllb3VjeHBncXVxaHdyYWFhcGpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2OTMxODQsImV4cCI6MjA2MjI2OTE4NH0.IekzHf28tw6LY6lpHLI9DhA6SH-DoNxvQc6MgS1k_mY"  // Ajoute ici ta clé publique Supabase
+  },
+  body: JSON.stringify({ email })
+});
 
         log(`Réponse brute de la vérification : ${checkResponse.status} ${checkResponse.statusText}`);
 
