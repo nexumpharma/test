@@ -14,15 +14,38 @@
             }
         };
 
+        // Fonction pour convertir le fichier en Base64
+        function convertToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = function () {
+                    resolve(reader.result.split(',')[1]); // Extraire la chaîne Base64
+                };
+                reader.onerror = function (error) {
+                    reject(error);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
         // Fonction pour envoyer les données à Airtable
         async function sendData() {
             const id = document.getElementById('idField').value;
             const iban = document.getElementById('iban').value;
+            const fileInput = document.getElementById('fileInput');
+            let ribBase64 = null;
+
+            // Vérifier si un fichier a été téléchargé
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                ribBase64 = await convertToBase64(file); // Convertir en Base64
+            }
 
             const airtableData = {
                 fields: {
                     "identifiant": id,
-                    "iban": iban
+                    "iban": iban,
+                    "rib": ribBase64 // Ajouter le fichier Base64 dans le champ "rib"
                 }
             };
 
@@ -55,6 +78,12 @@
         <label for="iban">IBAN:</label>
         <input type="text" id="iban" name="iban" required>
         
+        <br><br>
+
+        <!-- Champ pour télécharger un fichier PDF ou image -->
+        <label for="fileInput">Télécharger un fichier (PDF ou image):</label>
+        <input type="file" id="fileInput" name="file" accept="application/pdf, image/*">
+
         <br><br>
 
         <!-- Bouton envoyer -->
