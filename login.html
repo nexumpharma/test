@@ -52,10 +52,13 @@
       try {
         // Vérification de l'email dans Airtable
         const checkResponse = await fetch(edgeCheckEmail, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email })
-        });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer TON_JETON_D_AUTHENTIFICATION" // Remplace ceci par ton jeton valide
+  },
+  body: JSON.stringify({ email })
+});
 
         log(`Réponse brute de la vérification : ${checkResponse.status} ${checkResponse.statusText}`);
 
