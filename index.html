@@ -80,7 +80,8 @@ async function uploadToSupabase(file) {
   // Ajout d'un log pour voir la structure des données renvoyées par l'upload
   console.log("Réponse de l'upload : ", data);
   
-  const { publicUrl, error: urlError } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+  // Utilisation de 'data.path' directement pour éviter le doublon 'rib/rib/'
+  const { publicUrl, error: urlError } = supabase.storage.from(bucketName).getPublicUrl(data.path);
   
   // Ajoute un log pour vérifier la réponse de getPublicUrl
   console.log("URL publique générée : ", publicUrl);
