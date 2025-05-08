@@ -79,15 +79,13 @@ async function uploadToSupabase(file) {
 
   // Ajout d'un log pour voir la structure des données renvoyées par l'upload
   console.log("Réponse de l'upload : ", data);
-  
-  // Utilisation de 'data.path' directement pour éviter le doublon 'rib/rib/'
-  const { publicUrl, error: urlError } = supabase.storage.from(bucketName).getPublicUrl(data.path);
-  
-  // Ajoute un log pour vérifier la réponse de getPublicUrl
-  console.log("URL publique générée : ", publicUrl);
 
-  if (urlError || !publicUrl) {
-    console.error("Erreur URL publique :", urlError);
+  // Tentons de générer l'URL publique avec une méthode alternative
+  const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${data.path}`;
+  console.log("URL publique générée manuellement : ", publicUrl);
+
+  if (!publicUrl) {
+    console.error("Erreur URL publique générée manuellement !");
     addLog("Erreur lors de la génération de l'URL du fichier.");
     return null;
   }
