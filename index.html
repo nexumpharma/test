@@ -66,27 +66,34 @@
       logDiv.appendChild(logMessage);
     }
 
-    // Fonction upload vers Supabase
-    async function uploadToSupabase(file) {
-      const filePath = `rib/${Date.now()}-${file.name}`;
-      const { data, error } = await supabase.storage.from(bucketName).upload(filePath, file);
+// Fonction upload vers Supabase
+async function uploadToSupabase(file) {
+  const filePath = `rib/${Date.now()}-${file.name}`;
+  const { data, error } = await supabase.storage.from(bucketName).upload(filePath, file);
 
-      if (error) {
-        console.error("Erreur upload :", error);
-        addLog("Erreur lors du téléchargement du fichier vers Supabase.");
-        return null;
-      }
+  if (error) {
+    console.error("Erreur upload :", error);
+    addLog("Erreur lors du téléchargement du fichier vers Supabase.");
+    return null;
+  }
 
-      const { publicUrl, error: urlError } = supabase.storage.from(bucketName).getPublicUrl(filePath);
-      if (urlError) {
-        console.error("Erreur URL publique :", urlError);
-        addLog("Erreur lors de la génération de l'URL du fichier.");
-        return null;
-      }
+  // Ajout d'un log pour voir la structure des données renvoyées par l'upload
+  console.log("Réponse de l'upload : ", data);
+  
+  const { publicUrl, error: urlError } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+  
+  // Ajoute un log pour vérifier la réponse de getPublicUrl
+  console.log("URL publique générée : ", publicUrl);
 
-      addLog(`Fichier téléchargé avec succès ! URL : ${publicUrl}`);
-      return publicUrl;
-    }
+  if (urlError || !publicUrl) {
+    console.error("Erreur URL publique :", urlError);
+    addLog("Erreur lors de la génération de l'URL du fichier.");
+    return null;
+  }
+
+  addLog(`Fichier téléchargé avec succès ! URL : ${publicUrl}`);
+  return publicUrl;
+}
 
     // Envoi à Airtable
     async function sendToAirtable({ id, iban, ribUrl }) {
