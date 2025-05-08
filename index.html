@@ -85,6 +85,7 @@
       });
 
       const result = await response.json();
+      console.log("Réponse Airtable :", result); // 👈 à ajouter
       if (!response.ok) {
         console.error("Erreur Airtable :", result);
         alert("Erreur lors de l'envoi à Airtable.");
