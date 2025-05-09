@@ -133,17 +133,18 @@
       console.log("access_token récupéré :", session.access_token); // Ajoute cette ligne pour vérifier le token
 
       const response = await fetch("https://ieoucxpgquqhwraaapjh.functions.supabase.co/send-rib", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id,
-          iban,
-          ribUrl,
-          access_token: session.access_token  // Envoi du token d'authentification
-        }),
-      });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${session.access_token}` // Ajouter le token dans l'en-tête Authorization
+  },
+  body: JSON.stringify({
+    id,
+    iban,
+    ribUrl
+  }),
+});
+
 
       const result = await response.json();
       addLog(`Réponse Edge Function : ${JSON.stringify(result)}`);
