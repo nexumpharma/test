@@ -46,7 +46,24 @@
       logDiv.appendChild(logMessage);
     }
 
+    async function checkSession() {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) {
+        addLog("Session invalide ou absente. Redirection...");
+        window.location.href = "/test/login";
+        return false;
+      }
+      addLog("Session valide : " + JSON.stringify(data.session));
+      return true;
+    }
+
     async function uploadToSupabase(file) {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) {
+        addLog("Utilisateur non authentifié. L'upload est impossible.");
+        return null;
+      }
+
       const filePath = `pharmacie/${Date.now()}-${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage.from("pharmacie").upload(filePath, file, {
         contentType: file.type,
@@ -60,11 +77,14 @@
       }
 
       addLog(`Fichier uploadé avec succès dans le bucket 'pharmacie'`);
-      return true; // Indication que le fichier a été uploadé sans URL signée
+      return true; // Indication que le fichier a été uploadé
     }
 
     document.getElementById("ribForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+
+      const isAuthenticated = await checkSession();
+      if (!isAuthenticated) return;
 
       const id = document.getElementById("idField").value;
       const iban = document.getElementById("iban").value;
@@ -77,10 +97,12 @@
 
       const file = fileInput.files[0];
       addLog("⏫ Upload du fichier en cours...");
-      const fileUploaded = await uploadToSupabase(file);
+      const uploadSuccess = await uploadToSupabase(file);
 
-      if (fileUploaded) {
-        addLog("✅ Fichier envoyé dans le bucket privé 'pharmacie' avec succès !");
+      if (uploadSuccess) {
+        addLog("✅ Fichier téléchargé avec succès !");
+      } else {
+        addLog("❌ Erreur lors de l'upload du fichier");
       }
     });
   </script>
