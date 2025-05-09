@@ -91,10 +91,10 @@
       logDiv.appendChild(logMessage);
     }
 
-    // Fonction upload vers Supabase
+    // Fonction upload vers Supabase dans le bucket privé 'pharmacies'
     async function uploadToSupabase(file) {
       const filePath = `rib/${Date.now()}-${file.name}`;
-      const { data, error } = await supabase.storage.from("rib").upload(filePath, file);
+      const { data, error } = await supabase.storage.from("pharmacies").upload(filePath, file);
 
       if (error) {
         console.error("Erreur upload :", error);
@@ -102,7 +102,7 @@
         return null;
       }
 
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/rib/${data.path}`;
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/pharmacies/${data.path}`;
       console.log("URL publique générée manuellement : ", publicUrl);
 
       if (!publicUrl) {
