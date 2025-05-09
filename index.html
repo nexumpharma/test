@@ -97,6 +97,12 @@
       addLog("✅ Données envoyées à Airtable et Supabase : " + JSON.stringify(responseData));
     }
 
+    // Vérification immédiate de session au chargement de la page
+    (async () => {
+      const sessionValide = await checkSession();
+      if (!sessionValide) return;
+    })();
+
     document.getElementById("ribForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
