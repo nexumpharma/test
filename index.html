@@ -82,7 +82,7 @@
     }
 
     async function sendToEdgeFunction(id, iban) {
-      const response = await fetch("https://your-supabase-edge-function-url", {
+      const response = await fetch("https://ieoucxpgquqhwraaapjh.functions.supabase.co/send-rib", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, iban })
