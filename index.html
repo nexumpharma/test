@@ -64,6 +64,7 @@
         return null;
       }
 
+      // Génération du chemin d'upload dans le bucket 'pharmacie'
       const filePath = `pharmacie/${Date.now()}-${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage.from("pharmacie").upload(filePath, file, {
         contentType: file.type,
