@@ -35,122 +35,142 @@
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+    // Configuration Supabase
     const supabaseUrl = "https://ieoucxpgquqhwraaapjh.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imllb3VjeHBncXVxaHdyYWFhcGpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY2OTMxODQsImV4cCI6MjA2MjI2OTE4NH0.IekzHf28tw6LY6lpHLI9DhA6SH-DoNxvQc6MgS1k_mY";
     const supabase = createClient(supabaseUrl, supabaseKey);
-
     const logDiv = document.getElementById("log");
 
-    function addLog(message) {
-      const logMessage = document.createElement("p");
+    /**
+     * Ajoute un message de log dans l'interface
+     * @param {string} message - Message à afficher
+     * @param {string} type - Type de message (info, error, success)
+     */
+    function log(message, type = 'info') {
+      const logMessage = document.createElement('p');
       logMessage.textContent = message;
+      logMessage.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'inherit';
       logDiv.appendChild(logMessage);
+      console.log(`[${type.toUpperCase()}] ${message}`);
     }
 
-    // Fonction pour capturer le paramètre 'id' depuis l'URL
-    function getUrlParameter(name) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(name);
+    /**
+     * Récupère un paramètre d'URL
+     * @param {string} name - Nom du paramètre
+     * @returns {string|null} Valeur du paramètre
+     */
+    function getUrlParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
     }
 
-    // Assigner l'ID depuis l'URL au champ caché 'idField'
-    const idFromUrl = getUrlParameter('id');
-    if (idFromUrl) {
-      document.getElementById('idField').value = idFromUrl;
-    } else {
-      addLog("❌ Aucun 'id' trouvé dans l'URL.");
-    }
-
-    async function checkSession() {
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session) {
-        addLog("Session invalide ou absente. Redirection...");
+    /**
+     * Vérifie la session utilisateur et redirige si invalide
+     * @returns {Promise<boolean>} True si la session est valide
+     */
+    async function validateSession() {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error || !session) {
+          log('Session invalide - Redirection vers la page de login', 'error');
+          window.location.href = "/test/login";
+          return false;
+        }
+        
+        log('Session utilisateur validée avec succès', 'success');
+        return true;
+      } catch (err) {
+        log(`Erreur lors de la vérification de session: ${err.message}`, 'error');
         window.location.href = "/test/login";
         return false;
       }
-      addLog("Session valide");
-      return true;
     }
 
-    async function uploadToSupabase(file) {
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session) {
-        addLog("Utilisateur non authentifié. L'upload est impossible.");
+    /**
+     * Upload un fichier vers Supabase Storage
+     * @param {File} file - Fichier à uploader
+     * @returns {Promise<boolean>} True si l'upload a réussi
+     */
+    async function uploadFile(file) {
+      try {
+        const filePath = `rib/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from("pharmacies").upload(filePath, file, {
+          contentType: file.type,
+          upsert: true
+        });
+
+        if (error) throw error;
+        
+        log(`Fichier ${file.name} uploadé avec succès`, 'success');
+        return true;
+      } catch (error) {
+        log(`Échec de l'upload: ${error.message}`, 'error');
         return false;
       }
-
-      const filePath = `rib/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("pharmacies").upload(filePath, file, {
-        contentType: file.type,
-        upsert: true
-      });
-
-      if (uploadError) {
-        console.error("Erreur upload :", uploadError);
-        addLog("❌ Erreur lors de l'upload du fichier Supabase");
-        return false;
-      }
-
-      addLog("✅ Fichier uploadé avec succès dans le bucket 'pharmacies'");
-      return true;
     }
 
-    async function sendToEdgeFunction(id, iban) {
-      const { data: { session } } = await supabase.auth.getSession();
+    /**
+     * Envoie les données RIB à la fonction Edge
+     * @param {string} id - ID de la pharmacie
+     * @param {string} iban - Numéro IBAN
+     * @returns {Promise<void>}
+     */
+    async function sendRIBData(id, iban) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('Session invalide');
 
-      if (!session) {
-        addLog("❌ Session non valide pour appeler la fonction Edge.");
-        return;
+        const response = await fetch("https://ieoucxpgquqhwraaapjh.functions.supabase.co/send-rib", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ id, iban })
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        log(`RIB envoyé avec succès: ${JSON.stringify(data)}`, 'success');
+      } catch (error) {
+        log(`Échec de l'envoi du RIB: ${error.message}`, 'error');
       }
-
-      const response = await fetch("https://ieoucxpgquqhwraaapjh.functions.supabase.co/send-rib", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ id, iban })
-      });
-
-      if (!response.ok) {
-        addLog("❌ Erreur lors de l'envoi à la fonction Edge.");
-        return;
-      }
-
-      const responseData = await response.json();
-      addLog("✅ Données envoyées à Airtable et Supabase : " + JSON.stringify(responseData));
     }
 
-    // Vérification immédiate de session au chargement de la page
-    (async () => {
-      const sessionValide = await checkSession();
-      if (!sessionValide) return;
+    // Initialisation de la page
+    (async function init() {
+      // Vérification immédiate de la session
+      if (!await validateSession()) return;
+      
+      // Récupération de l'ID depuis l'URL
+      const id = getUrlParam('id');
+      if (!id) {
+        log("Paramètre 'id' manquant dans l'URL", 'error');
+        return;
+      }
+      document.getElementById('idField').value = id;
+
+      // Gestion du formulaire
+      document.getElementById("ribForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const id = document.getElementById("idField").value;
+        const iban = document.getElementById("iban").value;
+        const file = document.getElementById("fileInput").files[0];
+        
+        if (!file) {
+          log("Veuillez sélectionner un fichier", 'error');
+          return;
+        }
+
+        log("Traitement du formulaire en cours...");
+        
+        if (await uploadFile(file)) {
+          await sendRIBData(id, iban);
+        }
+      });
     })();
-
-    document.getElementById("ribForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const isAuthenticated = await checkSession();
-      if (!isAuthenticated) return;
-
-      const id = document.getElementById("idField").value;
-      const iban = document.getElementById("iban").value;
-      const fileInput = document.getElementById("fileInput");
-
-      if (!fileInput.files.length) {
-        addLog("Aucun fichier sélectionné");
-        return;
-      }
-
-      const file = fileInput.files[0];
-      addLog("⏫ Upload du fichier en cours...");
-      const uploadSuccess = await uploadToSupabase(file);
-
-      if (uploadSuccess) {
-        addLog("Envoi des données à la fonction Edge...");
-        await sendToEdgeFunction(id, iban);
-      }
-    });
   </script>
 </body>
 </html>
