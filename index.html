@@ -78,7 +78,29 @@
       }
 
       addLog(`Fichier uploadé avec succès dans le bucket 'pharmacies'`);
-      return true; // Indication que le fichier a été uploadé
+      return uploadData.Key; // Retourne l'URL du fichier uploadé
+    }
+
+    async function sendToEdgeFunction(id, iban, fileUrl) {
+      const response = await fetch("https://your-supabase-edge-function-url", { // Remplace par l'URL de ta fonction Edge Supabase
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          id: id,
+          iban: iban,
+          fileUrl: fileUrl
+        })
+      });
+
+      if (!response.ok) {
+        addLog("Erreur lors de l'envoi à la fonction Edge.");
+        return;
+      }
+
+      const responseData = await response.json();
+      addLog("✅ Données envoyées à Airtable et Supabase : " + JSON.stringify(responseData));
     }
 
     document.getElementById("ribForm").addEventListener("submit", async (e) => {
@@ -98,10 +120,12 @@
 
       const file = fileInput.files[0];
       addLog("⏫ Upload du fichier en cours...");
-      const uploadSuccess = await uploadToSupabase(file);
+      const fileUrl = await uploadToSupabase(file);
 
-      if (uploadSuccess) {
+      if (fileUrl) {
         addLog("✅ Fichier téléchargé avec succès !");
+        addLog("Envoi des données à la fonction Edge...");
+        await sendToEdgeFunction(id, iban, fileUrl);
       } else {
         addLog("❌ Erreur lors de l'upload du fichier");
       }
