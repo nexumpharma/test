@@ -54,31 +54,27 @@
 
       if (error) {
         console.error("Erreur de session:", error.message);
-        // Log d'erreur pour le manque de session
         addLog("Erreur de session : " + error.message);
-        // Redirige vers une page de connexion si la session est invalide
         window.location.href = "/test/login"; // Exemple de redirection vers une page de connexion
-        return false;
+        return null;
       }
 
       if (!data.session) {
         console.log("Aucune session active. Redirection...");
         addLog("Aucune session active. Redirection...");
-        // Redirige vers la page de connexion si l'utilisateur n'a pas de session
-        window.location.href = "/test/login";
-        return false;
+        window.location.href = "/test/login"; // Redirige vers la page de connexion si l'utilisateur n'a pas de session
+        return null;
       }
 
-      // Si l'utilisateur est authentifié
       console.log("Session valide :", data.session);
       addLog("Session valide : " + JSON.stringify(data.session));
-      return true;
+      return data.session;
     }
 
     // Vérifier la session dès le chargement de la page
     window.addEventListener("DOMContentLoaded", async () => {
-      const isAuthenticated = await checkSession();
-      if (!isAuthenticated) return;
+      const session = await checkSession();
+      if (!session) return;
 
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get("id");
@@ -121,11 +117,10 @@
 
     // Fonction pour envoyer les données à Airtable via l'Edge Function
     async function sendToAirtable({ id, iban, ribUrl }) {
-      const { data: session, error: sessionError } = await supabase.auth.getSession();
+      const session = await checkSession();
 
-      // Vérification de la session
-      if (sessionError || !session || !session.access_token) {
-        console.error("Erreur de session :", sessionError || "access_token manquant");
+      if (!session || !session.access_token) {
+        console.error("Erreur de session : access_token manquant");
         addLog("Erreur : L'`access_token` est manquant ou invalide.");
         alert("Erreur : L'`access_token` est manquant ou invalide.");
         return;
