@@ -59,23 +59,35 @@
     }
 
     async function uploadToSupabase(file) {
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session) {
-        addLog("Utilisateur non authentifié. L'upload est impossible.");
-        return null;
-      }
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) {
+    addLog("Utilisateur non authentifié. L'upload est impossible.");
+    return null;
+  }
 
-      const filePath = `rib/${Date.now()}-${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage.from("pharmacies").upload(filePath, file, {
-        contentType: file.type,
-        upsert: true
-      });
+  // Utilisation du bon bucket 'pharmacies'
+  const filePath = `rib/${Date.now()}-${file.name}`;
+  const { data: uploadData, error: uploadError } = await supabase.storage.from("pharmacies").upload(filePath, file, {
+    contentType: file.type,
+    upsert: true
+  });
 
-      if (uploadError) {
-        console.error("Erreur upload :", uploadError);
-        addLog("Erreur upload fichier Supabase");
-        return null;
-      }
+  // Vérification de l'erreur uniquement si l'upload échoue
+  if (uploadError) {
+    console.error("Erreur upload :", uploadError);
+    addLog("❌ Erreur lors de l'upload du fichier Supabase");
+    return null;
+  }
+
+  // Message de succès uniquement si l'upload réussit
+  if (uploadData) {
+    addLog(`✅ Fichier uploadé avec succès dans le bucket 'pharmacies'`);
+    return uploadData.Key; // Retourne l'URL du fichier uploadé
+  }
+
+  return null;
+}
+
 
       addLog(`Fichier uploadé avec succès dans le bucket 'pharmacies'`);
       return uploadData.Key;
