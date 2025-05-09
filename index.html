@@ -5,86 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Formulaire de RIB</title>
   <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-
-    /* Conteneur principal */
-    .container {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #fff;
-    }
-
-    h1 {
-      font-size: 2em;
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    /* Formulaire */
-    form {
-      width: 80%;
-      max-width: 400px;
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      margin-bottom: 30px;
-    }
-
-    label {
-      font-size: 1em;
-      color: #333;
-    }
-
-    input[type="text"], input[type="file"] {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background-color: #00aaff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 1em;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #0088cc;
-    }
-
-    /* Barre de progression */
-    .progress-container {
-      width: 100%;
-      background-color: #e0e0e0;
-      border-radius: 10px;
-      height: 10px;
-      margin-top: 20px;
-      display: none;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background-color: #00aaff;
-      width: 0%;
-      border-radius: 10px;
-    }
-
-    /* Logs */
     #log {
       background-color: #f4f4f4;
       border: 1px solid #ccc;
@@ -93,56 +13,24 @@
       max-height: 300px;
       overflow-y: auto;
       font-family: Arial, sans-serif;
-      width: 100%;
-      display: none;
-      border-radius: 5px;
-    }
-
-    /* Bouton flèche pour afficher/masquer les logs */
-    #toggleLogs {
-      background-color: #00aaff;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 50%;
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      cursor: pointer;
-      font-size: 1.5em;
-    }
-
-    #toggleLogs:hover {
-      background-color: #0088cc;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Formulaire de RIB</h1>
+  <h1>Formulaire de RIB</h1>
 
-    <form id="ribForm">
-      <input type="hidden" id="idField" name="id" />
-      <label for="iban">IBAN:</label>
-      <input type="text" id="iban" name="iban" required />
-      <br/><br/>
-      <label for="fileInput">Télécharger un fichier (PDF ou image):</label>
-      <input type="file" id="fileInput" name="file" accept="application/pdf, image/*" required />
-      <br/><br/>
-      <button type="submit">Envoyer</button>
-    </form>
+  <form id="ribForm">
+    <input type="hidden" id="idField" name="id" />
+    <label for="iban">IBAN:</label>
+    <input type="text" id="iban" name="iban" required />
+    <br/><br/>
+    <label for="fileInput">Télécharger un fichier (PDF ou image):</label>
+    <input type="file" id="fileInput" name="file" accept="application/pdf, image/*" required />
+    <br/><br/>
+    <button type="submit">Envoyer</button>
+  </form>
 
-    <!-- Barre de progression -->
-    <div class="progress-container" id="progressContainer">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-
-    <!-- Logs -->
-    <div id="log"></div>
-
-    <!-- Bouton pour afficher/masquer les logs -->
-    <button id="toggleLogs">↓</button>
-  </div>
+  <div id="log"></div>
 
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -152,8 +40,6 @@
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const logDiv = document.getElementById("log");
-    const progressContainer = document.getElementById("progressContainer");
-    const progressBar = document.getElementById("progressBar");
 
     function addLog(message) {
       const logMessage = document.createElement("p");
@@ -161,23 +47,13 @@
       logDiv.appendChild(logMessage);
     }
 
-    function showProgressBar() {
-      progressContainer.style.display = "block";
-    }
-
-    function updateProgressBar(progress) {
-      progressBar.style.width = `${progress}%`;
-    }
-
-    function hideProgressBar() {
-      progressContainer.style.display = "none";
-    }
-
+    // Fonction pour capturer le paramètre 'id' depuis l'URL
     function getUrlParameter(name) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(name);
     }
 
+    // Assigner l'ID depuis l'URL au champ caché 'idField'
     const idFromUrl = getUrlParameter('id');
     if (idFromUrl) {
       document.getElementById('idField').value = idFromUrl;
@@ -188,19 +64,18 @@
     async function checkSession() {
       const { data, error } = await supabase.auth.getSession();
       if (error || !data.session) {
-        addLog("❌ Vous n'êtes pas connecté. Vous serez redirigé vers la page de connexion.");
+        addLog("Session invalide ou absente. Redirection...");
         window.location.href = "/test/login";
         return false;
       }
-      addLog("✅ Session valide.");
+      addLog("Session valide");
       return true;
     }
 
     async function uploadToSupabase(file) {
-      showProgressBar();
       const { data, error } = await supabase.auth.getSession();
       if (error || !data.session) {
-        addLog("❌ Vous devez être connecté pour téléverser un fichier.");
+        addLog("Utilisateur non authentifié. L'upload est impossible.");
         return false;
       }
 
@@ -211,14 +86,12 @@
       });
 
       if (uploadError) {
-        addLog("❌ Une erreur est survenue lors du téléversement du fichier.");
-        hideProgressBar();
+        console.error("Erreur upload :", uploadError);
+        addLog("❌ Erreur lors de l'upload du fichier Supabase");
         return false;
       }
 
-      addLog("✅ Le fichier a été téléversé avec succès.");
-      updateProgressBar(100);
-      hideProgressBar();
+      addLog("✅ Fichier uploadé avec succès dans le bucket 'pharmacies'");
       return true;
     }
 
@@ -226,7 +99,7 @@
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        addLog("❌ La session n'est pas valide pour envoyer les données.");
+        addLog("❌ Session non valide pour appeler la fonction Edge.");
         return;
       }
 
@@ -240,13 +113,19 @@
       });
 
       if (!response.ok) {
-        addLog("❌ Une erreur est survenue lors de l'envoi des données.");
+        addLog("❌ Erreur lors de l'envoi à la fonction Edge.");
         return;
       }
 
       const responseData = await response.json();
-      addLog("✅ Les données ont été envoyées avec succès à Airtable et Supabase.");
+      addLog("✅ Données envoyées à Airtable et Supabase : " + JSON.stringify(responseData));
     }
+
+    // Vérification immédiate de session au chargement de la page
+    (async () => {
+      const sessionValide = await checkSession();
+      if (!sessionValide) return;
+    })();
 
     document.getElementById("ribForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -259,28 +138,17 @@
       const fileInput = document.getElementById("fileInput");
 
       if (!fileInput.files.length) {
-        addLog("❌ Aucun fichier sélectionné.");
+        addLog("Aucun fichier sélectionné");
         return;
       }
 
       const file = fileInput.files[0];
-      addLog("⏫ Téléversement du fichier en cours...");
+      addLog("⏫ Upload du fichier en cours...");
       const uploadSuccess = await uploadToSupabase(file);
 
       if (uploadSuccess) {
-        addLog("✅ Fichier téléversé. Envoi des données...");
+        addLog("Envoi des données à la fonction Edge...");
         await sendToEdgeFunction(id, iban);
-      }
-    });
-
-    // Fonction pour afficher ou masquer les logs
-    document.getElementById("toggleLogs").addEventListener("click", () => {
-      if (logDiv.style.display === "none" || !logDiv.style.display) {
-        logDiv.style.display = "block";
-        document.getElementById("toggleLogs").textContent = "↑";
-      } else {
-        logDiv.style.display = "none";
-        document.getElementById("toggleLogs").textContent = "↓";
       }
     });
   </script>
