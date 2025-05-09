@@ -65,7 +65,7 @@
       }
 
       // Utilisation du bon bucket 'pharmacies'
-      const filePath = `pharmacies/${Date.now()}-${file.name}`;
+      const filePath = `rib/${Date.now()}-${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage.from("pharmacies").upload(filePath, file, {
         contentType: file.type,
         upsert: true
